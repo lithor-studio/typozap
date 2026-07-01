@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download llama.cpp runtime
+        shell: pwsh
+        run: |
+          $release = Invoke-RestMethod https://api.github.com/repos/ggml-org/llama.cpp/releases/latest
+          $asset = $release.assets | Where-Object { $_.name -match 'bin-win-cpu-x64\.zip$' } | Select-Object -First 1
+          if (-not $asset) { throw 'Runtime llama.cpp Windows introuvable' }
+          Invoke-WebRequest $asset.browser_download_url -OutFile llama-runtime.zip
+          Expand-Archive llama-runtime.zip -DestinationPath llama-runtime
+          $server = Get-ChildItem llama-runtime -Recurse -Filter llama-server.exe | Select-Object -First 1
+          if (-not $server) { throw 'llama-server.exe absent de l archive' }
+          New-Item runtime -ItemType Directory -Force | Out-Null
+          Copy-Item "$($server.Directory.FullName)\*" runtime -Recurse -Force
+      - run: python -m pip install -r requirements.txt pyinstaller pillow
+      - run: python -m unittest discover -v
+      - run: python create_icon.py
+      - run: python -m PyInstaller typozap.spec --clean --noconfirm
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\windows\TypoZap.iss
+          Move-Item dist\TypoZap-Setup.exe dist\TypoZap-Windows-x64-Setup.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: dist/TypoZap-Windows-x64-Setup.exe
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download llama.cpp runtime
+        run: |
+          asset_url=$(curl -fsSL https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | \
+            jq -r '.assets[] | select(.name | test("bin-macos-arm64\\.tar\\.gz$")) | .browser_download_url' | head -1)
+          test -n "$asset_url"
+          curl -fL "$asset_url" -o llama-runtime.tar.gz
+          mkdir llama-runtime runtime
+          tar -xzf llama-runtime.tar.gz -C llama-runtime
+          server=$(find llama-runtime -type f -name llama-server | head -1)
+          test -n "$server"
+          cp -R "$(dirname "$server")"/* runtime/
+          chmod +x runtime/llama-server
+      - run: python -m pip install -r requirements.txt pyinstaller pillow
+      - run: python -m unittest discover -v
+      - run: ./build_macos.sh
+      - run: mv dist/TypoZap.dmg dist/TypoZap-macOS-arm64.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: dist/TypoZap-macOS-arm64.dmg
+
+  publish:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release-assets/*
+          body: |
+            TypoZap 1.1 apporte la correction locale avec Ministral 3 3B,
+            la prise en charge Windows/macOS et une gestion sûre du presse-papier.
+
+            Les applications ne sont pas encore signées : Windows SmartScreen ou
+            macOS Gatekeeper peuvent demander une confirmation au premier lancement.

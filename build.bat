@@ -13,8 +13,8 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-echo [2/4] Installation de PyInstaller...
-pip install pyinstaller pillow
+echo [2/4] Installation des dependances...
+python -m pip install -r requirements.txt pyinstaller pillow
 if %errorlevel% neq 0 (
     echo ERREUR: Impossible d'installer PyInstaller
     pause
@@ -23,7 +23,7 @@ if %errorlevel% neq 0 (
 echo.
 
 echo [3/4] Compilation de l'executable...
-pyinstaller typozap.spec --clean
+python -m PyInstaller typozap.spec --clean --noconfirm
 if %errorlevel% neq 0 (
     echo ERREUR: Echec de la compilation
     pause

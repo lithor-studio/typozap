@@ -11,4 +11,5 @@ lightning = [
 draw.polygon(lightning, fill=(33, 33, 33, 200))
 
 img.save('icon.ico', format='ICO', sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)])
-print("Icon created: icon.ico")
+img.save('icon.icns', format='ICNS')
+print("Icons created: icon.ico, icon.icns")

@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
 
 REM Demarrer l'application
 echo Lancement de l'application...
-python text_corrector.py
+python typozap.py
 
 if %errorlevel% neq 0 (
     echo.

@@ -1,142 +1,84 @@
 # ⚡ TypoZap
 
-**Zappez vos fautes instantanément !**
+Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilisez le raccourci global et TypoZap le corrige sans envoyer son contenu vers un service distant.
 
-TypoZap est un correcteur orthographique intelligent pour Windows qui corrige votre texte à la volée, n'importe où dans le système. Sélectionnez, zappez, c'est corrigé !
+## Fonctionnalités
 
-![TypoZap Logo](logo.svg)
+- correction standard, formelle, informelle, concise ou détaillée ;
+- `Ctrl+Shift+C` sous Windows et `⌘⇧C` sous macOS ;
+- moteur `llama.cpp` embarqué avec repli Ollama pour le développement ;
+- Ministral 3 3B Instruct Q4_K_M, environ 2,15 Go ;
+- téléchargement reprenable et vérifié au premier lancement ;
+- préservation des différents formats du presse-papier ;
+- annulation automatique si l'utilisateur copie autre chose pendant une correction ;
+- une seule correction active à la fois.
 
-## ✨ Fonctionnalités
-
-- ⚡ **Correction instantanée** - Ctrl+Shift+C pour zapper les fautes
-- 🎯 **Fonctionne partout** - Word, navigateur, email, messagerie...
-- 🎨 **5 styles de correction**
-  - Standard : Correction simple
-  - Formel : Style professionnel
-  - Informel : Ton décontracté
-  - Concis : Version courte
-  - Détaillé : Version enrichie
-- 🔄 **Remplacement automatique** - Le texte est corrigé directement
-- 📋 **Gestion intelligente du presse-papier** - Votre presse-papier est préservé
-- 🌐 **IA locale avec Ollama** - Pas besoin d'internet
-
-## 🚀 Installation rapide
-
-### Méthode 1 : Télécharger l'exécutable (Recommandé)
-
-1. Téléchargez `TypoZap.exe` depuis la [page des releases](https://github.com/votre-username/typozap/releases)
-2. Installez [Ollama](https://ollama.ai)
-3. Téléchargez un modèle : `ollama pull llama3.2`
-4. Lancez `TypoZap.exe`
-
-### Méthode 2 : Installation depuis les sources
+## Installation depuis les sources
 
 ```bash
-# Cloner le repo
-git clone https://github.com/votre-username/typozap.git
-cd typozap
+python -m pip install -r requirements.txt
+```
 
-# Installer les dépendances
-pip install -r requirements.txt
+Pour le mode de développement avec Ollama :
 
-# Installer Ollama et télécharger un modèle
-ollama pull llama3.2
-
-# Lancer TypoZap
+```bash
+ollama pull ministral-3:3b
+ollama create typozap-mistral-fr -f Modelfile
 python typozap.py
 ```
 
-## 📖 Utilisation
+Le moteur embarqué est utilisé automatiquement lorsque `runtime/llama-server` (ou `runtime/llama-server.exe`) et le modèle sont disponibles. Les chemins peuvent être remplacés avec `TYPOZAP_LLAMA_SERVER` et `TYPOZAP_MODEL_PATH`.
 
-1. **Démarrez TypoZap** - Une icône éclair ⚡ apparaît dans la barre des tâches
-2. **Sélectionnez du texte** avec des fautes n'importe où
-3. **Appuyez sur Ctrl+Shift+C** - Le texte est corrigé instantanément !
+## Utilisation
 
-### Via le menu contextuel
+1. Lancez TypoZap.
+2. Sélectionnez du texte dans une application.
+3. Utilisez `Ctrl+Shift+C` sous Windows ou `⌘⇧C` sous macOS.
 
-- Clic droit sur l'icône ⚡
-- Choisissez un style de correction
-- Le texte est corrigé selon le style choisi
+Si vous copiez une autre donnée pendant la correction, TypoZap annule le remplacement et conserve votre nouvelle copie. Le mode aperçu est disponible depuis l'icône de la barre système.
 
-## ⚙️ Configuration
+Sous macOS, autorisez TypoZap dans **Réglages Système → Confidentialité et sécurité → Accessibilité** lorsque le système le demande.
 
-### Changer le modèle Ollama
+## Tests
 
-Dans `typozap.py` ligne 52 :
-```python
-self.model = "llama3.2"  # ou "mistral", "llama3.2:1b", etc.
-```
-
-### Modèles recommandés
-
-- `llama3.2` - Rapide et précis (recommandé)
-- `mistral` - Excellent pour le français
-- `llama3.2:1b` - Ultra-rapide et léger
-
-### Changer le raccourci clavier
-
-Dans `typozap.py` ligne 217 :
-```python
-keyboard.HotKey.parse('<ctrl>+<shift>+c')  # Modifiez ici
-```
-
-## 🔧 Compiler l'exécutable
+Tests rapides, sans modèle :
 
 ```bash
-# Installer les dépendances de build
-pip install pyinstaller pillow
-
-# Créer l'icône
-python create_icon.py
-
-# Compiler
-pyinstaller typozap.spec
-
-# L'exécutable est dans dist/TypoZap.exe
+python -m unittest discover -v
 ```
 
-Ou simplement :
+Tests d'acceptation réels avec Ollama et `typozap-mistral-fr` :
+
 ```bash
-build.bat
+# macOS/Linux
+TYPOZAP_TEST_MODEL=1 python -m unittest tests.test_model_acceptance -v
+
+# Windows PowerShell
+$env:TYPOZAP_TEST_MODEL="1"; python -m unittest tests.test_model_acceptance -v
 ```
 
-## 🌟 Lancement au démarrage
+La CI exécute les tests sous Windows, macOS et Linux avec Python 3.10 et 3.12.
 
-1. Appuyez sur `Win+R`
-2. Tapez `shell:startup` et validez
-3. Créez un raccourci vers `TypoZap.exe` dans ce dossier
+## Construction
 
-## 🐛 Dépannage
+### Windows
 
-### "Aucun texte sélectionné"
-- Vérifiez que vous sélectionnez bien le texte AVANT d'appuyer sur le raccourci
-- Essayez d'augmenter le délai dans ClipboardWorker (ligne 130)
+1. Placez le binaire officiel `llama-server.exe` dans `runtime/`.
+2. Exécutez `build.bat`.
+3. Compilez `installer/windows/TypoZap.iss` avec Inno Setup.
 
-### "Ollama indisponible"
-- Vérifiez qu'Ollama est démarré : `ollama list`
-- Testez la connexion : `curl http://localhost:11434/api/tags`
+### macOS
 
-### Le raccourci ne fonctionne pas
-- Lancez TypoZap en tant qu'administrateur
-- Vérifiez qu'aucune autre application n'utilise Ctrl+Shift+C
+1. Placez le binaire `llama-server` correspondant à l'architecture dans `runtime/`.
+2. Rendez le script exécutable puis lancez `./build_macos.sh`.
+3. Signez et notarisez `dist/TypoZap.app` avant publication.
 
-## 📝 Contribuer
+Le modèle n'est pas inclus dans l'installateur léger. Il est téléchargé depuis le dépôt officiel Mistral au premier lancement et vérifié par SHA-256.
 
-Les contributions sont les bienvenues ! N'hésitez pas à :
-- 🐛 Signaler des bugs
-- 💡 Proposer de nouvelles fonctionnalités
-- 🔧 Soumettre des pull requests
+## Confidentialité
 
-## 📄 Licence
+Les corrections sont effectuées localement. TypoZap ne collecte pas les textes sélectionnés. Une connexion est uniquement nécessaire pour télécharger le modèle lors de la première installation.
 
-MIT License - Libre d'utilisation et de modification
+## Licence
 
-## 🙏 Remerciements
-
-- [Ollama](https://ollama.ai) - Pour l'IA locale
-- [PyQt5](https://www.riverbankcomputing.com/software/pyqt/) - Pour l'interface
-- Tous les contributeurs !
-
----
-
-**Fait avec ⚡ par la communauté**
+Le code de TypoZap est sous licence MIT. Ministral 3 et `llama.cpp` conservent leurs licences respectives, qui doivent accompagner les distributions.

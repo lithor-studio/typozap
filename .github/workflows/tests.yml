@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit-tests:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python-version: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -v
+      - run: python -m py_compile typozap.py corrector.py engine.py clipboard_transaction.py platform_support.py model_installer.py
+
+  package-smoke:
+    needs: unit-tests
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt pyinstaller pillow
+      - run: python create_icon.py
+      - run: python -m PyInstaller typozap.spec --clean --noconfirm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: typozap-${{ runner.os }}-unsigned
+          path: |
+            dist/TypoZap.exe
+            dist/TypoZap.app

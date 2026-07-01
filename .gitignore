@@ -1,4 +1,10 @@
 venv
+.venv/
+build/
 dist
 __pycache__/
 *.pyc
+*.dmg
+*.part
+icon.icns
+runtime/
