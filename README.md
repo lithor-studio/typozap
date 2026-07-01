@@ -6,7 +6,7 @@ Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilis
 
 - correction standard, formelle, informelle, concise ou détaillée ;
 - `Ctrl+Shift+C` sous Windows et `⌘⇧C` sous macOS ;
-- moteur `llama.cpp` embarqué avec repli Ollama pour le développement ;
+- moteur local TypoZap embarqué avec repli Ollama pour le développement ;
 - Ministral 3 3B Instruct Q4_K_M, environ 2,15 Go ;
 - téléchargement reprenable et vérifié au premier lancement ;
 - préservation des différents formats du presse-papier ;
@@ -27,7 +27,7 @@ ollama create typozap-mistral-fr -f Modelfile
 python typozap.py
 ```
 
-Le moteur embarqué est utilisé automatiquement lorsque `runtime/llama-server` (ou `runtime/llama-server.exe`) et le modèle sont disponibles. Les chemins peuvent être remplacés avec `TYPOZAP_LLAMA_SERVER` et `TYPOZAP_MODEL_PATH`.
+Le moteur embarqué est utilisé automatiquement lorsque `runtime/typozap-engine` (ou `runtime/typozap-engine.exe`) et le modèle sont disponibles. Les chemins peuvent être remplacés avec `TYPOZAP_ENGINE` et `TYPOZAP_MODEL_PATH`.
 
 ## Utilisation
 
@@ -63,13 +63,13 @@ La CI exécute les tests sous Windows, macOS et Linux avec Python 3.10 et 3.12.
 
 ### Windows
 
-1. Placez le binaire officiel `llama-server.exe` dans `runtime/`.
+1. Placez le binaire officiel du moteur dans `runtime/` sous le nom `typozap-engine.exe`.
 2. Exécutez `build.bat`.
 3. Compilez `installer/windows/TypoZap.iss` avec Inno Setup.
 
 ### macOS
 
-1. Placez le binaire `llama-server` correspondant à l'architecture dans `runtime/`.
+1. Placez le binaire du moteur correspondant à l'architecture dans `runtime/` sous le nom `typozap-engine`.
 2. Rendez le script exécutable puis lancez `./build_macos.sh`.
 3. Signez et notarisez `dist/TypoZap.app` avant publication.
 

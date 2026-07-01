@@ -359,7 +359,7 @@ class TypoZapApp(QApplication):
             self.corrector = corrector
             self.show_notification("Installation terminée", "Le moteur français local est prêt.")
         else:
-            self.show_notification("Moteur incomplet", "Le modèle est installé, mais llama.cpp est absent.", warning=True)
+            self.show_notification("Moteur incomplet", "Le moteur local TypoZap est absent.", warning=True)
 
     def show_notification(self, title, message, warning=False):
         tray_icon = getattr(self, "tray_icon", None)

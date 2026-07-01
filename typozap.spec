@@ -3,8 +3,6 @@ import sys
 from pathlib import Path
 
 root = Path(SPECPATH)
-runtime_name = "llama-server.exe" if sys.platform == "win32" else "llama-server"
-runtime_path = root / "runtime" / runtime_name
 runtime_files = [path for path in (root / "runtime").glob("*") if path.is_file()]
 binaries = [(str(path), "runtime") for path in runtime_files]
 hiddenimports = []

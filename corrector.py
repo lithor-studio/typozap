@@ -91,8 +91,8 @@ def normalize_result(original, corrected):
     return corrected
 
 
-class LlamaCppCorrector:
-    """Client du serveur llama.cpp livré avec l'application."""
+class LocalEngineCorrector:
+    """Client du moteur local livré avec TypoZap."""
 
     def __init__(self, base_url, timeout=60):
         self.base_url = base_url.rstrip("/")

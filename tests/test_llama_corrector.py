@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from corrector import LlamaCppCorrector
+from corrector import LocalEngineCorrector
 
 
-class LlamaCppCorrectorTests(unittest.TestCase):
+class LocalEngineCorrectorTests(unittest.TestCase):
     @patch("corrector.requests.post")
     def test_uses_chat_template_endpoint(self, post):
         response = Mock()
@@ -14,7 +14,7 @@ class LlamaCppCorrectorTests(unittest.TestCase):
         response.raise_for_status.return_value = None
         post.return_value = response
 
-        result = LlamaCppCorrector("http://127.0.0.1:1234").correct_text("Les enfant joue.")
+        result = LocalEngineCorrector("http://127.0.0.1:1234").correct_text("Les enfant joue.")
 
         self.assertEqual(result, "Les enfants jouent.")
         self.assertTrue(post.call_args.args[0].endswith("/v1/chat/completions"))

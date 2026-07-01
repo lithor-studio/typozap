@@ -2,9 +2,9 @@
 
 ## Ressources requises
 
-- Windows x64 : `runtime/llama-server.exe` et ses bibliothèques de la même release `llama.cpp`.
-- macOS Apple Silicon : `runtime/llama-server` arm64.
-- macOS Intel : `runtime/llama-server` x64.
+- Windows x64 : `runtime/typozap-engine.exe` et ses bibliothèques natives associées.
+- macOS Apple Silicon : `runtime/typozap-engine` arm64.
+- macOS Intel : `runtime/typozap-engine` x64.
 - Ne jamais mélanger des bibliothèques provenant de releases différentes.
 
 Le modèle est téléchargé à la demande depuis `mistralai/Ministral-3-3B-Instruct-2512-GGUF`. Son URL, sa taille et son SHA-256 sont figés dans `model_installer.py`.

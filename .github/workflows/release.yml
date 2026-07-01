@@ -28,6 +28,7 @@ jobs:
           if (-not $server) { throw 'llama-server.exe absent de l archive' }
           New-Item runtime -ItemType Directory -Force | Out-Null
           Copy-Item "$($server.Directory.FullName)\*" runtime -Recurse -Force
+          Move-Item runtime\llama-server.exe runtime\typozap-engine.exe
       - run: python -m pip install -r requirements.txt pyinstaller pillow
       - run: python -m unittest discover -v
       - run: python create_icon.py
@@ -61,7 +62,8 @@ jobs:
           server=$(find llama-runtime -type f -name llama-server | head -1)
           test -n "$server"
           cp -R "$(dirname "$server")"/* runtime/
-          chmod +x runtime/llama-server
+          mv runtime/llama-server runtime/typozap-engine
+          chmod +x runtime/typozap-engine
       - run: python -m pip install -r requirements.txt pyinstaller pillow
       - run: python -m unittest discover -v
       - run: ./build_macos.sh

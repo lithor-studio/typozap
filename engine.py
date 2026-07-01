@@ -1,4 +1,4 @@
-"""Détection et lancement optionnel du moteur llama.cpp embarqué."""
+"""Détection et lancement du moteur local TypoZap embarqué."""
 
 import os
 import socket
@@ -9,7 +9,7 @@ from pathlib import Path
 
 import requests
 
-from corrector import LlamaCppCorrector, OllamaCorrector
+from corrector import LocalEngineCorrector, OllamaCorrector
 
 
 def app_data_dir():
@@ -28,8 +28,8 @@ def resource_dir():
 
 class EngineManager:
     def __init__(self):
-        executable = "llama-server.exe" if sys.platform == "win32" else "llama-server"
-        self.binary = Path(os.getenv("TYPOZAP_LLAMA_SERVER", resource_dir() / "runtime" / executable))
+        executable = "typozap-engine.exe" if sys.platform == "win32" else "typozap-engine"
+        self.binary = Path(os.getenv("TYPOZAP_ENGINE", resource_dir() / "runtime" / executable))
         self.model = Path(os.getenv(
             "TYPOZAP_MODEL_PATH",
             app_data_dir() / "models" / "Ministral-3-3B-Instruct-2512-Q4_K_M.gguf",
@@ -58,7 +58,7 @@ class EngineManager:
                 break
             try:
                 if requests.get(f"{url}/health", timeout=0.25).ok:
-                    return LlamaCppCorrector(url)
+                    return LocalEngineCorrector(url)
             except requests.RequestException:
                 time.sleep(0.1)
         self.stop()
