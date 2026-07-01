@@ -1,4 +1,8 @@
-"""Transaction Qt préservant tous les formats du presse-papier."""
+"""Transaction Qt préservant tous les formats du presse-papier.
+
+Une ancienne valeur n'est jamais restaurée si l'utilisateur a effectué une
+nouvelle copie pendant la correction.
+"""
 
 from PyQt5.QtCore import QByteArray
 from PyQt5.QtCore import QMimeData
@@ -20,6 +24,7 @@ def clipboard_fingerprint(clipboard):
 
 
 class ClipboardTransaction:
+    """Suit les états original, sélection copiée et résultat corrigé."""
     def __init__(self, clipboard):
         self.clipboard = clipboard
         self.original = clipboard_fingerprint(clipboard)

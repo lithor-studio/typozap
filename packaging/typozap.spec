@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-root = Path(SPECPATH)
+root = Path(SPECPATH).parent
 runtime_files = [path for path in (root / "runtime").glob("*") if path.is_file()]
 binaries = [(str(path), "runtime") for path in runtime_files]
 hiddenimports = []
@@ -12,10 +12,10 @@ elif sys.platform == "darwin":
     hiddenimports += ["pynput.keyboard._darwin", "pynput.mouse._darwin"]
 
 a = Analysis(
-    ["typozap.py"],
-    pathex=[str(root)],
+    [str(root / "src" / "typozap" / "__main__.py")],
+    pathex=[str(root / "src")],
     binaries=binaries,
-    datas=[(str(root / "Modelfile"), ".")],
+    datas=[(str(root / "models" / "Modelfile"), ".")],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

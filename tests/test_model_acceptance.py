@@ -3,7 +3,7 @@
 import os
 import unittest
 
-from corrector import OllamaCorrector
+from typozap.correctors import OllamaCorrector
 
 
 @unittest.skipUnless(os.getenv("TYPOZAP_TEST_MODEL") == "1", "test Ollama optionnel")

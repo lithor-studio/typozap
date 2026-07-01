@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from corrector import LocalEngineCorrector
+from typozap.correctors import LocalEngineCorrector
 
 
 class LocalEngineCorrectorTests(unittest.TestCase):
-    @patch("corrector.requests.post")
+    @patch("typozap.correctors.requests.post")
     def test_uses_chat_template_endpoint(self, post):
         response = Mock()
         response.json.return_value = {

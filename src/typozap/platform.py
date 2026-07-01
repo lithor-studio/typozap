@@ -1,4 +1,4 @@
-"""Comportements clavier propres à Windows et macOS."""
+"""Raccourcis propres à Windows et macOS, sans dépendance graphique."""
 
 import platform
 

@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from model_installer import sha256_file
+from typozap.model_installer import sha256_file
 
 
 class ModelInstallerTests(unittest.TestCase):

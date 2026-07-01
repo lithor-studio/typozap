@@ -1,4 +1,4 @@
-"""Client Ollama et contrat de correction de texte de TypoZap."""
+"""Contrat de correction commun à Ollama et au moteur TypoZap embarqué."""
 
 import os
 
@@ -14,6 +14,7 @@ class CorrectionError(RuntimeError):
 
 
 class OllamaCorrector:
+    """Moteur de développement compatible avec l'API locale Ollama."""
     def __init__(self, base_url=None, model=None, timeout=60):
         self.base_url = (base_url or os.getenv("TYPOZAP_OLLAMA_URL", DEFAULT_BASE_URL)).rstrip("/")
         self.model = model or os.getenv("TYPOZAP_MODEL", DEFAULT_MODEL)
@@ -52,6 +53,7 @@ class OllamaCorrector:
 
     @staticmethod
     def build_prompt(text, style="standard"):
+        """Construit le contrat linguistique partagé par tous les moteurs."""
 
         instructions = {
             "standard": "Corrige uniquement l'orthographe, la grammaire, les accords et la ponctuation.",
@@ -83,6 +85,7 @@ class OllamaCorrector:
 
 
 def normalize_result(original, corrected):
+    """Nettoie la présentation sans masquer une réponse vide du modèle."""
     if not corrected:
         raise CorrectionError("Le modèle a retourné une réponse vide")
     if "'" in original and "’" not in original:

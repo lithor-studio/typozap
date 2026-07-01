@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typozap"
+version = "1.2.0"
+description = "Correcteur français local pour Windows et macOS"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+  "PyQt5==5.15.10",
+  "pyautogui==0.9.54",
+  "pynput==1.7.6",
+  "requests==2.31.0",
+]
+
+[project.scripts]
+typozap = "typozap.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,3 +1,9 @@
+"""Interface de barre de menus et orchestration des corrections TypoZap.
+
+La logique linguistique reste dans ``correctors`` : ce module coordonne Qt,
+le raccourci global, le presse-papier et le moteur local.
+"""
+
 import sys
 import time
 
@@ -19,18 +25,20 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 
-from clipboard_transaction import ClipboardTransaction, clipboard_fingerprint
-from corrector import CorrectionError
-from engine import EngineManager
-from platform_support import copy_shortcut, hotkey_label, hotkey_spec, paste_shortcut
-from model_installer import ModelInstallError, download_model
+from typozap.clipboard import ClipboardTransaction, clipboard_fingerprint, restore_snapshot
+from typozap.correctors import CorrectionError
+from typozap.engine import EngineManager
+from typozap.model_installer import ModelInstallError, download_model
+from typozap.platform import copy_shortcut, hotkey_label, hotkey_spec, paste_shortcut
 
 
 class HotkeyBridge(QObject):
+    """Transforme le callback pynput en signal sûr pour le thread principal Qt."""
     activated = pyqtSignal()
 
 
 class CorrectionDialog(QDialog):
+    """Affiche un résultat sans remplacer automatiquement la sélection."""
     def __init__(self, original_text, corrected_text, parent=None):
         super().__init__(parent)
         self.setWindowTitle("TypoZap - Aperçu")
@@ -63,6 +71,7 @@ class CorrectionDialog(QDialog):
 
 
 class CorrectionWorker(QThread):
+    """Exécute l'inférence hors du thread graphique."""
     succeeded = pyqtSignal(str, str)
     failed = pyqtSignal(str)
 
@@ -82,6 +91,7 @@ class CorrectionWorker(QThread):
 
 
 class ModelDownloadWorker(QThread):
+    """Télécharge le modèle sans figer l'interface."""
     progress = pyqtSignal(int)
     succeeded = pyqtSignal()
     failed = pyqtSignal(str)
@@ -102,6 +112,7 @@ class ModelDownloadWorker(QThread):
 
 
 class FirstRunDialog(QDialog):
+    """Assistant de téléchargement affiché au premier lancement."""
     installed = pyqtSignal()
 
     def __init__(self, destination, parent=None):
@@ -157,6 +168,7 @@ class FirstRunDialog(QDialog):
 
 
 class TypoZapApp(QApplication):
+    """Application de barre de menus et propriétaire de son cycle de vie."""
     def __init__(self, argv):
         super().__init__(argv)
         self.setApplicationName("TypoZap")
@@ -263,6 +275,7 @@ class TypoZapApp(QApplication):
         QTimer.singleShot(120, self.begin_capture)
 
     def begin_capture(self):
+        # Sauvegarder avant la copie permet de restaurer texte, HTML et fichiers.
         clipboard = self.clipboard()
         self.transaction = ClipboardTransaction(clipboard)
         clipboard.clear()
@@ -284,7 +297,6 @@ class TypoZapApp(QApplication):
             self.capture_timer.stop()
             # Ne restaure que si personne n'a placé une nouvelle donnée entre-temps.
             if clipboard_fingerprint(clipboard) == self.empty_fingerprint:
-                from clipboard_transaction import restore_snapshot
                 restore_snapshot(clipboard, self.transaction.original)
             self.finish_operation()
             self.show_notification("Aucun texte", "Sélectionnez du texte puis réessayez.", warning=True)
@@ -302,6 +314,7 @@ class TypoZapApp(QApplication):
             self.worker = None
 
     def show_result(self, original, corrected):
+        # Une copie faite par l'utilisateur pendant l'inférence reste prioritaire.
         if not self.transaction.selection_is_unchanged():
             self.finish_operation()
             self.show_notification(

@@ -1,3 +1,4 @@
+# Profil déterministe utilisé pour le développement avec Ollama.
 FROM ministral-3:3b
 
 PARAMETER temperature 0

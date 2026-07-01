@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from corrector import CorrectionError, OllamaCorrector
+from typozap.correctors import CorrectionError, OllamaCorrector
 
 
 class OllamaCorrectorTests(unittest.TestCase):
@@ -9,11 +9,11 @@ class OllamaCorrectorTests(unittest.TestCase):
         self.corrector = OllamaCorrector(model="test-model")
 
     def test_empty_text_does_not_call_ollama(self):
-        with patch("corrector.requests.post") as post:
+        with patch("typozap.correctors.requests.post") as post:
             self.assertEqual(self.corrector.correct_text(""), "")
             post.assert_not_called()
 
-    @patch("corrector.requests.post")
+    @patch("typozap.correctors.requests.post")
     def test_returns_trimmed_correction_and_deterministic_options(self, post):
         response = Mock()
         response.json.return_value = {"response": "  Les enfants jouent.  "}
@@ -28,7 +28,7 @@ class OllamaCorrectorTests(unittest.TestCase):
         self.assertEqual(payload["options"]["temperature"], 0)
         self.assertIn("Les enfant joue.", payload["prompt"])
 
-    @patch("corrector.requests.post")
+    @patch("typozap.correctors.requests.post")
     def test_network_error_is_not_returned_as_corrected_text(self, post):
         from requests import ConnectionError
 
@@ -36,7 +36,7 @@ class OllamaCorrectorTests(unittest.TestCase):
         with self.assertRaises(CorrectionError):
             self.corrector.correct_text("Une phrase.")
 
-    @patch("corrector.requests.post")
+    @patch("typozap.correctors.requests.post")
     def test_empty_model_response_is_an_error(self, post):
         response = Mock()
         response.json.return_value = {"response": ""}
@@ -46,7 +46,7 @@ class OllamaCorrectorTests(unittest.TestCase):
         with self.assertRaises(CorrectionError):
             self.corrector.correct_text("Une phrase.")
 
-    @patch("corrector.requests.post")
+    @patch("typozap.correctors.requests.post")
     def test_preserves_straight_apostrophe_style(self, post):
         response = Mock()
         response.json.return_value = {"response": "C’est l’heure."}

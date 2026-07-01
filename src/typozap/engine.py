@@ -9,7 +9,7 @@ from pathlib import Path
 
 import requests
 
-from corrector import LocalEngineCorrector, OllamaCorrector
+from typozap.correctors import LocalEngineCorrector, OllamaCorrector
 
 
 def app_data_dir():
@@ -27,6 +27,7 @@ def resource_dir():
 
 
 class EngineManager:
+    """Lance le moteur privé ou utilise Ollama comme solution de repli."""
     def __init__(self):
         executable = "typozap-engine.exe" if sys.platform == "win32" else "typozap-engine"
         self.binary = Path(os.getenv("TYPOZAP_ENGINE", resource_dir() / "runtime" / executable))
@@ -41,6 +42,7 @@ class EngineManager:
         return self.binary.is_file() and self.model.is_file()
 
     def start(self):
+        """Démarre le serveur sur un port libre et attend son état sain."""
         if not self.embedded_ready:
             return None
         port = self._free_port()

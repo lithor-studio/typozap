@@ -16,15 +16,15 @@ Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilis
 ## Installation depuis les sources
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 Pour le mode de développement avec Ollama :
 
 ```bash
 ollama pull ministral-3:3b
-ollama create typozap-mistral-fr -f Modelfile
-python typozap.py
+ollama create typozap-mistral-fr -f models/Modelfile
+python -m typozap
 ```
 
 Le moteur embarqué est utilisé automatiquement lorsque `runtime/typozap-engine` (ou `runtime/typozap-engine.exe`) et le modèle sont disponibles. Les chemins peuvent être remplacés avec `TYPOZAP_ENGINE` et `TYPOZAP_MODEL_PATH`.
@@ -61,18 +61,32 @@ $env:TYPOZAP_TEST_MODEL="1"; python -m unittest tests.test_model_acceptance -v
 
 La CI exécute les tests sous Windows, macOS et Linux avec Python 3.10 et 3.12.
 
+## Organisation du projet
+
+```text
+src/typozap/       application, moteur et presse-papier
+tests/             tests rapides et corpus français réel
+models/            profil Ollama de développement
+scripts/           lancement et construction locale
+packaging/         configuration PyInstaller et installateur Windows
+docs/              documentation de publication
+.github/            tests, builds et notes de release
+```
+
+Les modules restent volontairement spécialisés : `app.py` orchestre l'interface, `correctors.py` définit le contrat linguistique, `engine.py` gère le processus natif et `clipboard.py` protège les copies de l'utilisateur.
+
 ## Construction
 
 ### Windows
 
 1. Placez le binaire officiel du moteur dans `runtime/` sous le nom `typozap-engine.exe`.
-2. Exécutez `build.bat`.
-3. Compilez `installer/windows/TypoZap.iss` avec Inno Setup.
+2. Exécutez `scripts/build_windows.bat`.
+3. Compilez `packaging/windows/TypoZap.iss` avec Inno Setup.
 
 ### macOS
 
 1. Placez le binaire du moteur correspondant à l'architecture dans `runtime/` sous le nom `typozap-engine`.
-2. Rendez le script exécutable puis lancez `./build_macos.sh`.
+2. Rendez le script exécutable puis lancez `./scripts/build_macos.sh`.
 3. Signez et notarisez `dist/TypoZap.app` avant publication.
 
 Le modèle n'est pas inclus dans l'installateur léger. Il est téléchargé depuis le dépôt officiel Mistral au premier lancement et vérifié par SHA-256.

@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
 
 REM Demarrer l'application
 echo Lancement de l'application...
-python typozap.py
+python -m typozap
 
 if %errorlevel% neq 0 (
     echo.

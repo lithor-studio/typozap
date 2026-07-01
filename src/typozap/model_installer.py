@@ -28,6 +28,7 @@ def sha256_file(path, chunk_size=1024 * 1024):
 
 
 def download_model(destination, progress=None):
+    """Télécharge avec reprise, contrôle d'espace et vérification SHA-256."""
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     partial = destination.with_suffix(destination.suffix + ".part")

@@ -5,7 +5,7 @@ echo ========================================
 echo.
 
 echo [1/4] Creation de l'icone...
-python create_icon.py
+python scripts\create_icon.py
 if %errorlevel% neq 0 (
     echo ERREUR: Impossible de creer l'icone
     pause
@@ -14,7 +14,7 @@ if %errorlevel% neq 0 (
 echo.
 
 echo [2/4] Installation des dependances...
-python -m pip install -r requirements.txt pyinstaller pillow
+python -m pip install -e . pyinstaller pillow
 if %errorlevel% neq 0 (
     echo ERREUR: Impossible d'installer PyInstaller
     pause
@@ -23,7 +23,7 @@ if %errorlevel% neq 0 (
 echo.
 
 echo [3/4] Compilation de l'executable...
-python -m PyInstaller typozap.spec --clean --noconfirm
+python -m PyInstaller packaging\typozap.spec --clean --noconfirm
 if %errorlevel% neq 0 (
     echo ERREUR: Echec de la compilation
     pause

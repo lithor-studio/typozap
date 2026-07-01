@@ -2,7 +2,7 @@ import unittest
 
 try:
     from PyQt5.QtCore import QMimeData
-    from clipboard_transaction import ClipboardTransaction, mime_snapshot
+    from typozap.clipboard import ClipboardTransaction, mime_snapshot
 except ImportError:
     QMimeData = None
 

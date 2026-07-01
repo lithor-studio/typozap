@@ -16,9 +16,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -e .
       - run: python -m unittest discover -v
-      - run: python -m py_compile typozap.py corrector.py engine.py clipboard_transaction.py platform_support.py model_installer.py
+      - run: python -m compileall -q src tests
 
   package-smoke:
     needs: unit-tests
@@ -31,9 +31,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install -r requirements.txt pyinstaller pillow
-      - run: python create_icon.py
-      - run: python -m PyInstaller typozap.spec --clean --noconfirm
+      - run: python -m pip install -e . pyinstaller pillow
+      - run: python scripts/create_icon.py
+      - run: python -m PyInstaller packaging/typozap.spec --clean --noconfirm
       - uses: actions/upload-artifact@v4
         with:
           name: typozap-${{ runner.os }}-unsigned
