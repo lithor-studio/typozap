@@ -12,11 +12,12 @@ def primary_modifier(system=None):
 
 
 def hotkey_spec(system=None):
-    return "<cmd>+<shift>+c" if (system or system_name()) == "darwin" else "<ctrl>+<shift>+c"
+    # Cmd+Shift+C ouvre la palette de couleurs native dans de nombreuses apps macOS.
+    return "<ctrl>+<alt>+c" if (system or system_name()) == "darwin" else "<ctrl>+<shift>+c"
 
 
 def hotkey_label(system=None):
-    return "⌘⇧C" if (system or system_name()) == "darwin" else "Ctrl+Shift+C"
+    return "⌃⌥C" if (system or system_name()) == "darwin" else "Ctrl+Shift+C"
 
 
 def copy_shortcut(system=None):

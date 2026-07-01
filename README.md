@@ -5,7 +5,7 @@ Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilis
 ## Fonctionnalités
 
 - correction standard, formelle, informelle, concise ou détaillée ;
-- `Ctrl+Shift+C` sous Windows et `⌘⇧C` sous macOS ;
+- `Ctrl+Shift+C` sous Windows et `⌃⌥C` sous macOS ;
 - moteur local TypoZap embarqué avec repli Ollama pour le développement ;
 - Ministral 3 3B Instruct Q4_K_M, environ 2,15 Go ;
 - téléchargement reprenable et vérifié au premier lancement ;
@@ -33,7 +33,9 @@ Le moteur embarqué est utilisé automatiquement lorsque `runtime/typozap-engine
 
 1. Lancez TypoZap.
 2. Sélectionnez du texte dans une application.
-3. Utilisez `Ctrl+Shift+C` sous Windows ou `⌘⇧C` sous macOS.
+3. Utilisez `Ctrl+Shift+C` sous Windows ou `⌃⌥C` sous macOS.
+
+Sous macOS, TypoZap est une application de barre de menus : l'icône éclair apparaît près de l'horloge et non dans le Dock.
 
 Si vous copiez une autre donnée pendant la correction, TypoZap annule le remplacement et conserve votre nouvelle copie. Le mode aperçu est disponible depuis l'icône de la barre système.
 

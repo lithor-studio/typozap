@@ -2,8 +2,8 @@ import sys
 import time
 
 import pyautogui
-from PyQt5.QtCore import QObject, QSettings, QThread, QTimer, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
+from PyQt5.QtCore import QObject, QPoint, QSettings, QThread, QTimer, Qt, pyqtSignal
+from PyQt5.QtGui import QColor, QIcon, QPainter, QPixmap, QPolygon
 from PyQt5.QtWidgets import (
     QAction,
     QApplication,
@@ -228,9 +228,11 @@ class TypoZapApp(QApplication):
         painter.setBrush(QColor(255, 193, 7))
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(2, 2, 60, 60)
-        painter.setPen(QColor(33, 33, 33))
-        painter.setFont(QFont("Arial", 32, QFont.Bold))
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "⚡")
+        painter.setBrush(QColor(33, 33, 33))
+        painter.drawPolygon(QPolygon([
+            QPoint(36, 10), QPoint(18, 35), QPoint(29, 35),
+            QPoint(25, 54), QPoint(47, 27), QPoint(35, 27),
+        ]))
         painter.end()
         return QIcon(pixmap)
 

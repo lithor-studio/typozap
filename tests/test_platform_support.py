@@ -8,7 +8,8 @@ class PlatformSupportTests(unittest.TestCase):
     def test_macos_uses_command(self):
         self.assertEqual(platform_support.copy_shortcut("darwin"), ("command", "c"))
         self.assertEqual(platform_support.paste_shortcut("darwin"), ("command", "v"))
-        self.assertEqual(platform_support.hotkey_spec("darwin"), "<cmd>+<shift>+c")
+        self.assertEqual(platform_support.hotkey_spec("darwin"), "<ctrl>+<alt>+c")
+        self.assertEqual(platform_support.hotkey_label("darwin"), "⌃⌥C")
 
     def test_windows_uses_control(self):
         self.assertEqual(platform_support.copy_shortcut("windows"), ("ctrl", "c"))
