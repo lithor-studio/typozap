@@ -9,7 +9,6 @@ import sys
 import time
 import traceback
 
-import pyautogui
 from PyQt5.QtCore import QObject, QPoint, QSettings, QThread, QTimer, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap, QPolygon
 from PyQt5.QtWidgets import (
@@ -47,6 +46,12 @@ from typozap.features import (
 from typozap.model_installer import ModelInstallError, download_model
 from typozap.platform import copy_shortcut, default_hotkey_sequence, hotkey_spec_from_label, paste_shortcut
 from typozap.platform import HotkeyMatcher
+
+
+def send_hotkey(*keys):
+    """Charge l'automatisation uniquement sur un poste graphique réel."""
+    import pyautogui
+    pyautogui.hotkey(*keys)
 
 
 class HotkeyBridge(QObject):
@@ -577,7 +582,7 @@ class TypoZapApp(QApplication):
         clipboard = self.clipboard()
         self.transaction = ClipboardTransaction(clipboard)
         self.transaction.begin_capture()
-        pyautogui.hotkey(*copy_shortcut())
+        send_hotkey(*copy_shortcut())
         self.capture_deadline = time.monotonic() + 1.5
         self.capture_timer.start()
 
@@ -666,7 +671,7 @@ class TypoZapApp(QApplication):
             except Exception as exc:
                 self.logger.error("history_write_failed type=%s", type(exc).__name__)
         self.transaction.set_corrected_text(corrected)
-        pyautogui.hotkey(*paste_shortcut())
+        send_hotkey(*paste_shortcut())
         transaction = self.transaction
         QTimer.singleShot(500, lambda: self.restore_after_paste(transaction))
         self.show_notification("Texte corrigé", f"{len(original)} → {len(corrected)} caractères")
@@ -717,7 +722,7 @@ class TypoZapApp(QApplication):
                 "Annulation protégée", "Revenez dans l'application corrigée puis réessayez.", warning=True
             )
             return
-        pyautogui.hotkey("ctrl" if sys.platform != "darwin" else "command", "z")
+        send_hotkey("ctrl" if sys.platform != "darwin" else "command", "z")
         self.undo_action.setEnabled(False)
         self.show_notification("Annulation envoyée", "Le document actif a reçu la commande Annuler.")
 
