@@ -36,6 +36,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 
+from typozap import __version__
 from typozap.clipboard import ClipboardTransaction
 from typozap.correctors import CorrectionError
 from typozap.engine import EngineManager
@@ -405,7 +406,7 @@ class TypoZapApp(QApplication):
         self.capture_timer.timeout.connect(self.poll_selection)
 
         self.tray_icon = QSystemTrayIcon(self.create_icon(), self)
-        self.tray_icon.setToolTip("TypoZap — correcteur français local")
+        self.tray_icon.setToolTip(f"TypoZap {__version__} — correcteur français local")
         self.create_menu()
         self.tray_icon.show()
 
@@ -747,7 +748,7 @@ class TypoZapApp(QApplication):
         memory_line = f"\nMémoire du moteur : {memory:.0f} Mo" if memory is not None else ""
         QMessageBox.information(
             None, "Statistiques TypoZap",
-            f"Moteur : {state}\nModèle : Ministral 3 3B\nCorrections : {count}\n"
+            f"Version : {__version__}\nMoteur : {state}\nModèle : Ministral 3 3B\nCorrections : {count}\n"
             f"Caractères traités : {chars}\nDurée moyenne : {average:.1f} s{memory_line}",
         )
 

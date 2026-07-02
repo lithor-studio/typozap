@@ -1,5 +1,5 @@
 #define MyAppName "TypoZap"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.0.1"
 #define MyAppExeName "TypoZap.exe"
 
 [Setup]

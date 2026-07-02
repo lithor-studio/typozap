@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typozap"
-version = "2.0.0"
+version = "2.0.1"
 description = "Correcteur français local pour Windows et macOS"
 readme = "README.md"
 requires-python = ">=3.10"
