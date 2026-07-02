@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -23,8 +24,6 @@ class CorrectionDialogTests(unittest.TestCase):
         self.assertEqual(dialog.result_text(), "Les enfant jouent.")
 
     def test_hotkey_restart_is_bound_to_new_listener(self):
-        from pynput import keyboard
-
         first, second = Mock(), Mock()
         first.canonical.side_effect = lambda key: key
         second.canonical.side_effect = lambda key: key
@@ -37,17 +36,19 @@ class CorrectionDialogTests(unittest.TestCase):
             show_notification=Mock(),
         )
         fake.emit_hotkey = bridge.activated.emit
-        with (
-            patch.object(keyboard.HotKey, "parse", return_value=["x"]),
-            patch.object(keyboard, "Listener", return_value=second) as listener_class,
-        ):
+        fake_keyboard = SimpleNamespace(
+            HotKey=SimpleNamespace(parse=Mock(return_value=["x"])),
+            Listener=Mock(return_value=second),
+        )
+        fake_pynput = SimpleNamespace(keyboard=fake_keyboard)
+        with patch.dict(sys.modules, {"pynput": fake_pynput, "pynput.keyboard": fake_keyboard}):
             self.assertTrue(TypoZapApp.setup_hotkey(fake))
             first.stop.assert_called_once()
             first.join.assert_called_once_with(1)
-            listener_class.call_args.kwargs["on_press"]("x")
+            fake_keyboard.Listener.call_args.kwargs["on_press"]("x")
             second.canonical.assert_called_with("x")
             fake.hotkey_bridge.activated.emit.assert_not_called()
-            listener_class.call_args.kwargs["on_release"]("x")
+            fake_keyboard.Listener.call_args.kwargs["on_release"]("x")
             fake.hotkey_bridge.activated.emit.assert_called_once()
 
 
