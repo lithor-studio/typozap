@@ -86,4 +86,4 @@ jobs:
         with:
           generate_release_notes: true
           files: release-assets/*
-          body_path: .github/release-notes/v1.2.0.md
+          body_path: .github/release-notes/v2.0.0.md

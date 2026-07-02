@@ -7,7 +7,7 @@
 - macOS Intel : `runtime/typozap-engine` x64.
 - Ne jamais mélanger des bibliothèques provenant de releases différentes.
 
-Le modèle est téléchargé à la demande depuis `mistralai/Ministral-3-3B-Instruct-2512-GGUF`. Son URL, sa taille et son SHA-256 sont figés dans `src/typozap/model_installer.py`.
+Le seul modèle pris en charge est `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf`, téléchargé à la demande depuis le dépôt officiel Mistral. Son URL, sa taille et son SHA-256 sont figés dans `src/typozap/model_installer.py`. Aucun fallback Ollama ni modèle configurable ne doit être ajouté au paquet.
 
 ## Windows
 
@@ -30,6 +30,7 @@ Le modèle est téléchargé à la demande depuis `mistralai/Ministral-3-3B-Inst
 - suite unitaire verte sur les trois systèmes ;
 - corpus français réel validé avec le modèle livré ;
 - nouvelle copie utilisateur jamais écrasée ;
+- réponse tronquée jamais collée dans le document ;
 - erreur moteur jamais collée dans le document ;
 - empreinte du modèle vérifiée ;
 - installateur et désinstallateur testés sur machine propre ;

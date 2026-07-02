@@ -11,15 +11,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM Verifier si Ollama est accessible
-echo Verification d'Ollama...
-curl -s http://localhost:11434/api/tags >nul 2>&1
-if %errorlevel% neq 0 (
-    echo AVERTISSEMENT: Ollama ne semble pas accessible
-    echo Assurez-vous qu'Ollama est demarre
-    echo.
-)
-
 REM Demarrer l'application
 echo Lancement de l'application...
 python -m typozap

@@ -15,7 +15,7 @@ a = Analysis(
     [str(root / "src" / "typozap" / "__main__.py")],
     pathex=[str(root / "src")],
     binaries=binaries,
-    datas=[(str(root / "models" / "Modelfile"), ".")],
+    datas=[],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

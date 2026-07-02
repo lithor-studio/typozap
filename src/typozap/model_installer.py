@@ -31,6 +31,18 @@ def download_model(destination, progress=None):
     """Télécharge avec reprise, contrôle d'espace et vérification SHA-256."""
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
+
+    # Un modèle déjà présent est vérifié avant tout accès réseau.
+    if destination.exists():
+        if destination.stat().st_size == MODEL_SIZE and sha256_file(destination) == MODEL_SHA256:
+            if progress:
+                progress(MODEL_SIZE, MODEL_SIZE)
+            return destination
+        try:
+            destination.unlink()
+        except OSError as exc:
+            raise ModelInstallError(f"Impossible de remplacer le modèle invalide : {exc}") from exc
+
     partial = destination.with_suffix(destination.suffix + ".part")
     existing = partial.stat().st_size if partial.exists() else 0
 
@@ -49,14 +61,21 @@ def download_model(destination, progress=None):
     if not append:
         existing = 0
     downloaded = existing
-    with open(partial, "ab" if append else "wb") as stream:
-        for chunk in response.iter_content(chunk_size=1024 * 1024):
-            if not chunk:
-                continue
-            stream.write(chunk)
-            downloaded += len(chunk)
-            if progress:
-                progress(downloaded, MODEL_SIZE)
+    try:
+        with open(partial, "ab" if append else "wb") as stream:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if not chunk:
+                    continue
+                stream.write(chunk)
+                downloaded += len(chunk)
+                if downloaded > MODEL_SIZE:
+                    raise ModelInstallError("Le serveur a envoyé un fichier de taille inattendue.")
+                if progress:
+                    progress(downloaded, MODEL_SIZE)
+    except requests.RequestException as exc:
+        raise ModelInstallError(f"Téléchargement interrompu : {exc}") from exc
+    except OSError as exc:
+        raise ModelInstallError(f"Écriture du modèle impossible : {exc}") from exc
 
     if downloaded != MODEL_SIZE or sha256_file(partial) != MODEL_SHA256:
         raise ModelInstallError("Le modèle téléchargé est incomplet ou corrompu.")

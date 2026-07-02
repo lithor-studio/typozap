@@ -28,6 +28,16 @@ def text_mime(text, html=None):
 
 @unittest.skipIf(QMimeData is None, "PyQt5 absent")
 class ClipboardTransactionTests(unittest.TestCase):
+    def test_capture_marker_preserves_original_on_timeout(self):
+        clipboard = FakeClipboard(text_mime("ancien", "<b>ancien</b>"))
+        original = mime_snapshot(clipboard.mimeData())
+        transaction = ClipboardTransaction(clipboard)
+        transaction.begin_capture()
+
+        self.assertTrue(transaction.capture_is_pending())
+        self.assertTrue(transaction.restore_original_if_capture_pending())
+        self.assertEqual(mime_snapshot(clipboard.mimeData()), original)
+
     def test_restores_all_original_formats(self):
         clipboard = FakeClipboard(text_mime("ancien", "<b>ancien</b>"))
         original = mime_snapshot(clipboard.mimeData())
@@ -51,6 +61,15 @@ class ClipboardTransactionTests(unittest.TestCase):
 
         self.assertFalse(transaction.restore_if_unchanged())
         self.assertEqual(clipboard.mimeData().text(), "nouvelle copie utilisateur")
+
+    def test_identical_user_copy_removes_result_token(self):
+        clipboard = FakeClipboard(text_mime("ancien"))
+        transaction = ClipboardTransaction(clipboard)
+        transaction.set_corrected_text("corrigé")
+        clipboard.setMimeData(text_mime("corrigé"))
+
+        self.assertFalse(transaction.restore_if_unchanged())
+        self.assertEqual(clipboard.mimeData().text(), "corrigé")
 
     def test_change_during_inference_is_detected(self):
         clipboard = FakeClipboard(text_mime("ancien"))

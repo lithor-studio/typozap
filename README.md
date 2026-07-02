@@ -1,100 +1,92 @@
 # ⚡ TypoZap
 
-Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilisez le raccourci global et TypoZap le corrige sans envoyer son contenu vers un service distant.
+Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilisez le raccourci global et TypoZap le corrige sans envoyer son contenu à un service distant.
 
-## Fonctionnalités
+## Principes
 
-- correction standard, formelle, informelle, concise ou détaillée ;
-- `Ctrl+Shift+C` sous Windows et `⌃⌥C` sous macOS ;
-- moteur local TypoZap embarqué avec repli Ollama pour le développement ;
-- Ministral 3 3B Instruct Q4_K_M, environ 2,15 Go ;
-- téléchargement reprenable et vérifié au premier lancement ;
-- préservation des différents formats du presse-papier ;
-- annulation automatique si l'utilisateur copie autre chose pendant une correction ;
-- une seule correction active à la fois.
+- un seul modèle : **Ministral 3 3B Instruct 2512 Q4_K_M** ;
+- un seul moteur local `llama.cpp`, livré avec l'application ;
+- aucun service cloud, compte ou serveur Ollama ;
+- téléchargement reprenable et vérifié du modèle au premier lancement ;
+- presse-papier transactionnel : tous les formats initiaux sont restaurés et une copie utilisateur reste toujours prioritaire ;
+- refus automatique des sélections trop longues et des réponses tronquées.
+- découpage automatique des textes longs par paragraphes ;
+- aperçu des différences avec acceptation ou refus de chaque modification ;
+- annulation rapide de la dernière correction ;
+- dictionnaire personnel, guide de style, ton personnalisé et mode strict ;
+- profils automatiques selon l'application active ;
+- explication locale optionnelle des corrections ;
+- statistiques et journal technique sans contenu utilisateur ;
+- historique local optionnel, limité à 20 entrées et chiffré par Windows DPAPI.
 
 ## Installation depuis les sources
 
 ```bash
 python -m pip install -e .
-```
-
-Pour le mode de développement avec Ollama :
-
-```bash
-ollama pull ministral-3:3b
-ollama create typozap-mistral-fr -f models/Modelfile
 python -m typozap
 ```
 
-Le moteur embarqué est utilisé automatiquement lorsque `runtime/typozap-engine` (ou `runtime/typozap-engine.exe`) et le modèle sont disponibles. Les chemins peuvent être remplacés avec `TYPOZAP_ENGINE` et `TYPOZAP_MODEL_PATH`.
+Le binaire officiel `llama-server` doit être placé dans `runtime/` sous le nom `typozap-engine.exe` sous Windows ou `typozap-engine` sous macOS.
+
+Le modèle n'est pas configurable : TypoZap télécharge et utilise exclusivement `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf` dans son répertoire de données utilisateur.
 
 ## Utilisation
 
-1. Lancez TypoZap.
+1. Lancez TypoZap et installez le modèle lors du premier démarrage.
 2. Sélectionnez du texte dans une application.
-3. Utilisez `Ctrl+Shift+C` sous Windows ou `⌃⌥C` sous macOS.
+3. Utilisez `Ctrl+Shift+F8` sous Windows ou `⌃⌥C` sous macOS.
 
-Sous macOS, TypoZap est une application de barre de menus : l'icône éclair apparaît près de l'horloge et non dans le Dock.
+Le raccourci Windows évite volontairement `Ctrl+Shift+C`, réservé à l'insertion de code dans Microsoft Teams.
+Il peut être modifié depuis l'icône TypoZap → **Configurer le raccourci…** ; le choix est conservé entre les lancements.
 
-Si vous copiez une autre donnée pendant la correction, TypoZap annule le remplacement et conserve votre nouvelle copie. Le mode aperçu est disponible depuis l'icône de la barre système.
+TypoZap sauvegarde le presse-papier avant la capture. Des marqueurs privés permettent de détecter toute copie effectuée pendant la correction ou le collage, y compris une copie contenant exactement le même texte. Dans ce cas, la copie utilisateur est conservée et TypoZap annule sa restauration.
 
-Sous macOS, autorisez TypoZap dans **Réglages Système → Confidentialité et sécurité → Accessibilité** lorsque le système le demande.
+Les réglages d'écriture sont accessibles depuis **Préférences d'écriture…**. Les profils applicatifs utilisent le titre de la fenêtre active, par exemple `Teams=informel` ou `Outlook=formel`. Le titre sert uniquement au choix du profil et n'est pas journalisé.
+
+Le journal technique est enregistré dans `%LOCALAPPDATA%\TypoZap\logs` sous Windows. Il contient les durées et erreurs techniques, jamais le texte traité. L'historique de contenu est désactivé par défaut.
+
+Sous macOS, autorisez TypoZap dans **Réglages Système → Confidentialité et sécurité → Accessibilité**.
 
 ## Tests
-
-Tests rapides, sans modèle :
 
 ```bash
 python -m unittest discover -v
 ```
 
-Tests d'acceptation réels avec Ollama et `typozap-mistral-fr` :
+Test d'acceptation avec le runtime et le modèle réellement installés :
 
-```bash
-# macOS/Linux
-TYPOZAP_TEST_MODEL=1 python -m unittest tests.test_model_acceptance -v
-
-# Windows PowerShell
+```powershell
 $env:TYPOZAP_TEST_MODEL="1"; python -m unittest tests.test_model_acceptance -v
 ```
 
-La CI exécute les tests sous Windows, macOS et Linux avec Python 3.10 et 3.12.
-
-## Organisation du projet
+## Organisation
 
 ```text
-src/typozap/       application, moteur et presse-papier
-tests/             tests rapides et corpus français réel
-models/            profil Ollama de développement
+src/typozap/       interface, moteur, correction et presse-papier
+tests/             tests unitaires et corpus français
 scripts/           lancement et construction locale
-packaging/         configuration PyInstaller et installateur Windows
+packaging/         PyInstaller et installateur Windows
 docs/              documentation de publication
-.github/            tests, builds et notes de release
 ```
-
-Les modules restent volontairement spécialisés : `app.py` orchestre l'interface, `correctors.py` définit le contrat linguistique, `engine.py` gère le processus natif et `clipboard.py` protège les copies de l'utilisateur.
 
 ## Construction
 
 ### Windows
 
-1. Placez le binaire officiel du moteur dans `runtime/` sous le nom `typozap-engine.exe`.
+1. Placez le runtime `llama.cpp` dans `runtime/`.
 2. Exécutez `scripts/build_windows.bat`.
 3. Compilez `packaging/windows/TypoZap.iss` avec Inno Setup.
 
 ### macOS
 
-1. Placez le binaire du moteur correspondant à l'architecture dans `runtime/` sous le nom `typozap-engine`.
-2. Rendez le script exécutable puis lancez `./scripts/build_macos.sh`.
+1. Placez le runtime correspondant à l'architecture dans `runtime/`.
+2. Lancez `./scripts/build_macos.sh`.
 3. Signez et notarisez `dist/TypoZap.app` avant publication.
-
-Le modèle n'est pas inclus dans l'installateur léger. Il est téléchargé depuis le dépôt officiel Mistral au premier lancement et vérifié par SHA-256.
 
 ## Confidentialité
 
-Les corrections sont effectuées localement. TypoZap ne collecte pas les textes sélectionnés. Une connexion est uniquement nécessaire pour télécharger le modèle lors de la première installation.
+Les corrections sont entièrement locales. La connexion réseau sert uniquement au téléchargement initial du modèle officiel.
 
 ## Licence
 
-Le code de TypoZap est sous licence MIT. Ministral 3 et `llama.cpp` conservent leurs licences respectives, qui doivent accompagner les distributions.
+Le code de TypoZap est sous licence MIT. Ministral 3 et `llama.cpp` conservent leurs licences respectives.
