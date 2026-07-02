@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typozap"
-version = "2.0.2"
+version = "2.1.0"
 description = "Correcteur français local pour Windows et macOS"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,6 +14,7 @@ dependencies = [
   "pyautogui==0.9.54",
   "pynput==1.7.6",
   "requests==2.31.0",
+  "uiautomation==2.0.29; sys_platform == 'win32'",
 ]
 
 [project.scripts]

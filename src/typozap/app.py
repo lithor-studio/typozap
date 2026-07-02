@@ -47,6 +47,7 @@ from typozap.features import (
 from typozap.model_installer import ModelInstallError, download_model
 from typozap.platform import copy_shortcut, default_hotkey_sequence, hotkey_spec_from_label, paste_shortcut
 from typozap.platform import HotkeyMatcher
+from typozap.selection_effect import AuroraOverlay, selection_rectangles
 
 
 def send_hotkey(*keys):
@@ -215,6 +216,9 @@ class PreferencesDialog(QDialog):
         self.history_enabled.setEnabled(history_available)
         self.history_enabled.setChecked(history_available and settings.value("history/enabled", False, type=bool))
         privacy_layout.addWidget(self.show_diff)
+        self.aurora_enabled = QCheckBox("Afficher l'aurore boréale sur le texte pendant la correction")
+        self.aurora_enabled.setChecked(settings.value("ui/aurora_effect", True, type=bool))
+        privacy_layout.addWidget(self.aurora_enabled)
         privacy_layout.addWidget(self.history_enabled)
         privacy_layout.addWidget(QLabel(
             "L'historique est désactivé par défaut et protégé par le compte Windows (DPAPI). "
@@ -256,6 +260,7 @@ class PreferencesDialog(QDialog):
             "writing/style_guide": self.guide.toPlainText().strip(),
             "writing/profiles": self.profiles.toPlainText().strip(),
             "ui/show_diff": self.show_diff.isChecked(),
+            "ui/aurora_effect": self.aurora_enabled.isChecked(),
             "history/enabled": self.history_enabled.isChecked(),
             "performance/idle_minutes": self.idle_timeout.currentData(),
         }
@@ -444,6 +449,7 @@ class TypoZapApp(QApplication):
         self.idle_timer = QTimer(self)
         self.idle_timer.setSingleShot(True)
         self.idle_timer.timeout.connect(self.put_engine_to_sleep)
+        self.aurora_overlay = AuroraOverlay()
 
         self.tray_icon = QSystemTrayIcon(self.create_icon(), self)
         self.tray_icon.setToolTip(f"TypoZap {__version__} — correcteur français local")
@@ -613,6 +619,7 @@ class TypoZapApp(QApplication):
         self.active_title = active_window_title()
         default_style = self.settings.value("writing/default_style", "standard", type=str)
         self.pending_style = style or style_for_window(self.active_title, self.application_profiles(), default_style)
+        self.start_aurora_effect()
         self.idle_timer.stop()
         if self.corrector and self.corrector.is_ready():
             QTimer.singleShot(120, self.begin_capture)
@@ -627,12 +634,18 @@ class TypoZapApp(QApplication):
         self.engine_worker.finished.connect(self.correction_thread_finished)
         self.engine_worker.start()
 
+    def start_aurora_effect(self):
+        if not self.settings.value("ui/aurora_effect", True, type=bool):
+            return
+        self.aurora_overlay.start(selection_rectangles())
+
     def engine_started(self, corrector):
         self.corrector = corrector
         self.logger.info("engine_woke_up")
         QTimer.singleShot(120, self.begin_capture)
 
     def engine_start_failed(self, message):
+        self.aurora_overlay.stop()
         self.logger.error("engine_start_failed error=%s", message[:200])
         self.finish_operation()
         self.show_notification("Moteur indisponible", message, warning=True)
@@ -656,6 +669,7 @@ class TypoZapApp(QApplication):
             return
         if time.monotonic() >= self.capture_deadline:
             self.capture_timer.stop()
+            self.aurora_overlay.stop()
             # Ne restaure que si personne n'a placé une nouvelle donnée entre-temps.
             if self.transaction.capture_is_pending():
                 self.transaction.restore_original_if_capture_pending()
@@ -693,6 +707,7 @@ class TypoZapApp(QApplication):
         worker.deleteLater()
 
     def show_result(self, original, corrected):
+        self.aurora_overlay.complete()
         # Une copie faite par l'utilisateur pendant l'inférence reste prioritaire.
         if not self.transaction.selection_is_unchanged():
             self.finish_operation()
@@ -745,6 +760,7 @@ class TypoZapApp(QApplication):
             self.finish_operation()
 
     def show_correction_error(self, message):
+        self.aurora_overlay.stop()
         if self.transaction:
             self.transaction.restore_original_if_selection_unchanged()
         self.finish_operation()
@@ -929,6 +945,9 @@ class TypoZapApp(QApplication):
         idle_timer = getattr(self, "idle_timer", None)
         if idle_timer:
             idle_timer.stop()
+        aurora_overlay = getattr(self, "aurora_overlay", None)
+        if aurora_overlay:
+            aurora_overlay.stop()
         hotkey_listener = getattr(self, "hotkey_listener", None)
         if hotkey_listener:
             hotkey_listener.stop()

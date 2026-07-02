@@ -19,6 +19,7 @@ Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilis
 - statistiques et journal technique sans contenu utilisateur ;
 - historique local optionnel, limité à 20 entrées et chiffré par Windows DPAPI.
 - démarrage du modèle à la demande et mise en veille automatique pour libérer la mémoire.
+- aurore boréale bleu-vert animée directement sur les lignes sélectionnées pendant la correction.
 
 ## Installation depuis les sources
 
@@ -45,6 +46,8 @@ TypoZap sauvegarde le presse-papier avant la capture. Des marqueurs privés perm
 Les réglages d'écriture sont accessibles depuis **Préférences d'écriture…**. Les profils applicatifs utilisent le titre de la fenêtre active, par exemple `Teams=informel` ou `Outlook=formel`. Le titre sert uniquement au choix du profil et n'est pas journalisé.
 
 Dans l'onglet **Performance**, le moteur peut être arrêté après 1, 5 ou 15 minutes d'inactivité. La première correction suivant une mise en veille prend quelques secondes supplémentaires, le temps de recharger Ministral.
+
+L'effet aurore utilise les informations d'accessibilité de l'application active pour suivre la sélection sans prendre le focus ni intercepter les clics. Lorsqu'une application ne publie pas ces coordonnées, TypoZap affiche un indicateur discret près du curseur.
 
 Le journal technique est enregistré dans `%LOCALAPPDATA%\TypoZap\logs` sous Windows. Il contient les durées et erreurs techniques, jamais le texte traité. L'historique de contenu est désactivé par défaut.
 

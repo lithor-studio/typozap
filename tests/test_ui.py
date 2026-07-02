@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtWidgets import QApplication
 
 from typozap.app import CorrectionDialog, TypoZapApp
@@ -74,6 +74,15 @@ class CorrectionDialogTests(unittest.TestCase):
         fake.engine.stop.assert_called_once()
         self.assertIsNone(fake.corrector)
         fake.explain_action.setEnabled.assert_called_once_with(False)
+
+    @patch("typozap.app.selection_rectangles", return_value=[QRect(10, 20, 100, 24)])
+    def test_aurora_starts_on_selected_text(self, rectangles):
+        fake = SimpleNamespace(
+            settings=SimpleNamespace(value=Mock(return_value=True)),
+            aurora_overlay=Mock(),
+        )
+        TypoZapApp.start_aurora_effect(fake)
+        fake.aurora_overlay.start.assert_called_once_with([QRect(10, 20, 100, 24)])
 
 
 if __name__ == "__main__":

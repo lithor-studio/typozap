@@ -18,8 +18,10 @@ jobs:
           python-version: "3.12"
       - name: Download llama.cpp runtime
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $release = Invoke-RestMethod https://api.github.com/repos/ggml-org/llama.cpp/releases/latest
+          $release = gh api repos/ggml-org/llama.cpp/releases/latest | ConvertFrom-Json
           $asset = $release.assets | Where-Object { $_.name -match 'bin-win-cpu-x64\.zip$' } | Select-Object -First 1
           if (-not $asset) { throw 'Runtime llama.cpp Windows introuvable' }
           Invoke-WebRequest $asset.browser_download_url -OutFile llama-runtime.zip
@@ -52,9 +54,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Download llama.cpp runtime
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          asset_url=$(curl -fsSL https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | \
-            jq -r '.assets[] | select(.name | test("bin-macos-arm64\\.tar\\.gz$")) | .browser_download_url' | head -1)
+          asset_url=$(gh api repos/ggml-org/llama.cpp/releases/latest --jq \
+            '.assets[] | select(.name | test("bin-macos-arm64\\.tar\\.gz$")) | .browser_download_url' | head -1)
           test -n "$asset_url"
           curl -fL "$asset_url" -o llama-runtime.tar.gz
           mkdir llama-runtime runtime
@@ -86,4 +90,4 @@ jobs:
         with:
           generate_release_notes: true
           files: release-assets/*
-          body_path: .github/release-notes/v2.0.2.md
+          body_path: .github/release-notes/v2.1.0.md

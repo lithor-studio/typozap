@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
+import importlib.util
 from pathlib import Path
 
 root = Path(SPECPATH).parent
@@ -7,9 +8,13 @@ runtime_files = [path for path in (root / "runtime").glob("*") if path.is_file()
 binaries = [(str(path), "runtime") for path in runtime_files]
 hiddenimports = []
 if sys.platform == "win32":
-    hiddenimports += ["pynput.keyboard._win32", "pynput.mouse._win32"]
+    hiddenimports += ["pynput.keyboard._win32", "pynput.mouse._win32", "uiautomation"]
+    uia_spec = importlib.util.find_spec("uiautomation")
+    if uia_spec:
+        uia_bin = Path(uia_spec.origin).parent / "bin"
+        binaries += [(str(path), "uiautomation/bin") for path in uia_bin.glob("*.dll")]
 elif sys.platform == "darwin":
-    hiddenimports += ["pynput.keyboard._darwin", "pynput.mouse._darwin"]
+    hiddenimports += ["pynput.keyboard._darwin", "pynput.mouse._darwin", "ApplicationServices"]
 
 a = Analysis(
     [str(root / "src" / "typozap" / "__main__.py")],
