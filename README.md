@@ -18,6 +18,7 @@ Correcteur français local pour Windows et macOS. Sélectionnez un texte, utilis
 - explication locale optionnelle des corrections ;
 - statistiques et journal technique sans contenu utilisateur ;
 - historique local optionnel, limité à 20 entrées et chiffré par Windows DPAPI.
+- démarrage du modèle à la demande et mise en veille automatique pour libérer la mémoire.
 
 ## Installation depuis les sources
 
@@ -42,6 +43,8 @@ Il peut être modifié depuis l'icône TypoZap → **Configurer le raccourci…*
 TypoZap sauvegarde le presse-papier avant la capture. Des marqueurs privés permettent de détecter toute copie effectuée pendant la correction ou le collage, y compris une copie contenant exactement le même texte. Dans ce cas, la copie utilisateur est conservée et TypoZap annule sa restauration.
 
 Les réglages d'écriture sont accessibles depuis **Préférences d'écriture…**. Les profils applicatifs utilisent le titre de la fenêtre active, par exemple `Teams=informel` ou `Outlook=formel`. Le titre sert uniquement au choix du profil et n'est pas journalisé.
+
+Dans l'onglet **Performance**, le moteur peut être arrêté après 1, 5 ou 15 minutes d'inactivité. La première correction suivant une mise en veille prend quelques secondes supplémentaires, le temps de recharger Ministral.
 
 Le journal technique est enregistré dans `%LOCALAPPDATA%\TypoZap\logs` sous Windows. Il contient les durées et erreurs techniques, jamais le texte traité. L'historique de contenu est désactivé par défaut.
 

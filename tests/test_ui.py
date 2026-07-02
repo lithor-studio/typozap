@@ -51,6 +51,30 @@ class CorrectionDialogTests(unittest.TestCase):
             fake_keyboard.Listener.call_args.kwargs["on_release"]("x")
             fake.hotkey_bridge.activated.emit.assert_called_once()
 
+    def test_idle_timer_uses_configured_minutes(self):
+        fake = SimpleNamespace(
+            settings=SimpleNamespace(value=Mock(return_value=5)),
+            idle_timer=Mock(),
+            corrector=Mock(),
+        )
+        TypoZapApp.schedule_engine_sleep(fake)
+        fake.idle_timer.stop.assert_called_once()
+        fake.idle_timer.start.assert_called_once_with(5 * 60 * 1000)
+
+    def test_engine_sleep_releases_corrector(self):
+        fake = SimpleNamespace(
+            busy=False,
+            explanation_worker=None,
+            corrector=Mock(),
+            engine=Mock(),
+            explain_action=Mock(),
+            logger=Mock(),
+        )
+        TypoZapApp.put_engine_to_sleep(fake)
+        fake.engine.stop.assert_called_once()
+        self.assertIsNone(fake.corrector)
+        fake.explain_action.setEnabled.assert_called_once_with(False)
+
 
 if __name__ == "__main__":
     unittest.main()

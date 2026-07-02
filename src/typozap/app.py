@@ -221,6 +221,21 @@ class PreferencesDialog(QDialog):
             "Le journal technique ne contient jamais les textes."
         ))
         tabs.addTab(privacy, "Confidentialité")
+
+        performance = QDialog()
+        performance_layout = QFormLayout(performance)
+        self.idle_timeout = QComboBox()
+        for label, minutes in (("1 minute", 1), ("5 minutes", 5), ("15 minutes", 15), ("Jamais", 0)):
+            self.idle_timeout.addItem(label, minutes)
+        current_timeout = settings.value("performance/idle_minutes", 5, type=int)
+        index = self.idle_timeout.findData(current_timeout)
+        self.idle_timeout.setCurrentIndex(index if index >= 0 else 1)
+        performance_layout.addRow("Mettre le moteur en veille après", self.idle_timeout)
+        performance_layout.addRow(QLabel(
+            "En veille, le modèle est déchargé de la mémoire. "
+            "La prochaine correction prendra quelques secondes de plus."
+        ))
+        tabs.addTab(performance, "Performance")
         layout.addWidget(tabs)
 
         buttons = QHBoxLayout()
@@ -242,6 +257,7 @@ class PreferencesDialog(QDialog):
             "writing/profiles": self.profiles.toPlainText().strip(),
             "ui/show_diff": self.show_diff.isChecked(),
             "history/enabled": self.history_enabled.isChecked(),
+            "performance/idle_minutes": self.idle_timeout.currentData(),
         }
         for key, value in values.items():
             self.settings.setValue(key, value)
@@ -280,6 +296,25 @@ class ExplanationWorker(QThread):
     def run(self):
         try:
             self.succeeded.emit(self.corrector.explain_correction(self.original, self.corrected))
+        except Exception as exc:
+            self.failed.emit(str(exc))
+
+
+class EngineStartWorker(QThread):
+    succeeded = pyqtSignal(object)
+    failed = pyqtSignal(str)
+
+    def __init__(self, engine, parent=None):
+        super().__init__(parent)
+        self.engine = engine
+
+    def run(self):
+        try:
+            corrector = self.engine.start()
+            if corrector is None:
+                self.failed.emit("Le moteur Ministral n'a pas pu démarrer.")
+            else:
+                self.succeeded.emit(corrector)
         except Exception as exc:
             self.failed.emit(str(exc))
 
@@ -384,7 +419,8 @@ class TypoZapApp(QApplication):
             self.hotkey = default_hotkey_sequence()
             self.settings.setValue("hotkey", self.hotkey)
         self.engine = EngineManager()
-        self.corrector = self.engine.corrector()
+        # Le modèle reste déchargé jusqu'à la première correction.
+        self.corrector = None
         self.logger = technical_logger()
         self.metrics = Metrics(self.settings)
         self.history = SecureHistory()
@@ -398,12 +434,16 @@ class TypoZapApp(QApplication):
         self.correction_started = 0.0
         self.last_correction = None
         self.explanation_worker = None
+        self.engine_worker = None
         self.retired_workers = []
         sys.excepthook = self.handle_unhandled_exception
 
         self.capture_timer = QTimer(self)
         self.capture_timer.setInterval(40)
         self.capture_timer.timeout.connect(self.poll_selection)
+        self.idle_timer = QTimer(self)
+        self.idle_timer.setSingleShot(True)
+        self.idle_timer.timeout.connect(self.put_engine_to_sleep)
 
         self.tray_icon = QSystemTrayIcon(self.create_icon(), self)
         self.tray_icon.setToolTip(f"TypoZap {__version__} — correcteur français local")
@@ -556,13 +596,11 @@ class TypoZapApp(QApplication):
         if self.busy:
             self.show_notification("Correction en cours", "Attendez la fin de la correction actuelle.", warning=True)
             return
-        if self.corrector is None or not self.corrector.is_ready():
+        if not self.engine.embedded_ready:
             if not self.engine.binary.is_file():
                 message = "Le moteur TypoZap est absent de l'application. Reconstruisez l'exécutable avec le runtime."
-            elif not self.engine.model.is_file():
-                message = "Le modèle Ministral n'est pas installé."
             else:
-                message = "Le moteur n'a pas pu démarrer. Utilisez « Installer ou réparer le modèle »."
+                message = "Le modèle Ministral n'est pas installé ou doit être réparé."
             self.show_notification(
                 "Moteur indisponible",
                 message,
@@ -575,8 +613,29 @@ class TypoZapApp(QApplication):
         self.active_title = active_window_title()
         default_style = self.settings.value("writing/default_style", "standard", type=str)
         self.pending_style = style or style_for_window(self.active_title, self.application_profiles(), default_style)
-        # Laisse le temps aux touches du raccourci global d'être relâchées.
+        self.idle_timer.stop()
+        if self.corrector and self.corrector.is_ready():
+            QTimer.singleShot(120, self.begin_capture)
+        else:
+            self.start_engine_for_correction()
+
+    def start_engine_for_correction(self):
+        self.show_notification("Démarrage de Ministral", "Chargement du modèle local en mémoire…")
+        self.engine_worker = EngineStartWorker(self.engine, self)
+        self.engine_worker.succeeded.connect(self.engine_started)
+        self.engine_worker.failed.connect(self.engine_start_failed)
+        self.engine_worker.finished.connect(self.correction_thread_finished)
+        self.engine_worker.start()
+
+    def engine_started(self, corrector):
+        self.corrector = corrector
+        self.logger.info("engine_woke_up")
         QTimer.singleShot(120, self.begin_capture)
+
+    def engine_start_failed(self, message):
+        self.logger.error("engine_start_failed error=%s", message[:200])
+        self.finish_operation()
+        self.show_notification("Moteur indisponible", message, warning=True)
 
     def begin_capture(self):
         # Sauvegarder avant la copie permet de restaurer texte, HTML et fichiers.
@@ -627,6 +686,8 @@ class TypoZapApp(QApplication):
             self.worker = None
         if self.explanation_worker is worker:
             self.explanation_worker = None
+        if self.engine_worker is worker:
+            self.engine_worker = None
         if worker in self.retired_workers:
             self.retired_workers.remove(worker)
         worker.deleteLater()
@@ -710,7 +771,8 @@ class TypoZapApp(QApplication):
         }
 
     def configure_preferences(self):
-        PreferencesDialog(self.settings, self.history.available).exec_()
+        if PreferencesDialog(self.settings, self.history.available).exec_() == QDialog.Accepted:
+            self.schedule_engine_sleep()
 
     def undo_last_correction(self):
         if not self.last_correction or time.monotonic() - self.last_correction[2] > 60:
@@ -743,7 +805,12 @@ class TypoZapApp(QApplication):
 
     def show_statistics(self):
         count, chars, average = self.metrics.summary()
-        state = "prêt" if self.corrector and self.corrector.is_ready() else "indisponible"
+        if self.corrector and self.corrector.is_ready():
+            state = "prêt"
+        elif self.engine.embedded_ready:
+            state = "en veille"
+        else:
+            state = "indisponible"
         memory = process_memory_mb(self.engine.process.pid if self.engine.process else None)
         memory_line = f"\nMémoire du moteur : {memory:.0f} Mo" if memory is not None else ""
         QMessageBox.information(
@@ -790,6 +857,23 @@ class TypoZapApp(QApplication):
     def finish_operation(self):
         self.busy = False
         self.transaction = None
+        self.schedule_engine_sleep()
+
+    def schedule_engine_sleep(self):
+        minutes = self.settings.value("performance/idle_minutes", 5, type=int)
+        self.idle_timer.stop()
+        if minutes > 0 and self.corrector:
+            self.idle_timer.start(minutes * 60 * 1000)
+
+    def put_engine_to_sleep(self):
+        if self.busy or (self.explanation_worker and self.explanation_worker.isRunning()):
+            self.schedule_engine_sleep()
+            return
+        if self.corrector:
+            self.engine.stop()
+            self.corrector = None
+            self.explain_action.setEnabled(False)
+            self.logger.info("engine_entered_sleep")
 
     def toggle_auto_replace(self, enabled):
         self.auto_replace = enabled
@@ -799,6 +883,8 @@ class TypoZapApp(QApplication):
     def check_engine_status(self):
         if self.corrector and self.corrector.is_ready():
             self.show_notification("Moteur disponible", "Ministral 3 3B est prêt.")
+        elif self.engine.embedded_ready:
+            self.show_notification("Moteur en veille", "Ministral démarrera à la prochaine correction.")
         else:
             if not self.engine.binary.is_file():
                 message = "Runtime llama.cpp absent de l'application."
@@ -814,10 +900,9 @@ class TypoZapApp(QApplication):
         dialog.exec_()
 
     def activate_embedded_engine(self):
-        corrector = self.engine.start()
-        if corrector:
-            self.corrector = corrector
-            self.show_notification("Installation terminée", "Le moteur français local est prêt.")
+        self.corrector = None
+        if self.engine.embedded_ready:
+            self.show_notification("Installation terminée", "Ministral démarrera à la première correction.")
         else:
             self.show_notification("Moteur incomplet", "Le moteur local TypoZap est absent.", warning=True)
 
@@ -841,13 +926,19 @@ class TypoZapApp(QApplication):
         capture_timer = getattr(self, "capture_timer", None)
         if capture_timer:
             capture_timer.stop()
+        idle_timer = getattr(self, "idle_timer", None)
+        if idle_timer:
+            idle_timer.stop()
         hotkey_listener = getattr(self, "hotkey_listener", None)
         if hotkey_listener:
             hotkey_listener.stop()
         engine = getattr(self, "engine", None)
         if engine:
             engine.stop()
-        for worker in [getattr(self, "worker", None), getattr(self, "explanation_worker", None)]:
+        for worker in [
+            getattr(self, "worker", None), getattr(self, "explanation_worker", None),
+            getattr(self, "engine_worker", None),
+        ]:
             if worker and worker.isRunning():
                 worker.requestInterruption()
                 worker.wait(3000)
