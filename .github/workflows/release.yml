@@ -70,7 +70,9 @@ jobs:
           chmod +x runtime/typozap-engine
       - run: python -m pip install -e . pyinstaller pillow
       - run: python -m unittest discover -v
-      - run: ./scripts/build_macos.sh
+      - name: Build macOS application
+        shell: bash
+        run: bash ./scripts/build_macos.sh
       - run: mv dist/TypoZap.dmg dist/TypoZap-macOS-arm64.dmg
       - uses: actions/upload-artifact@v4
         with:
